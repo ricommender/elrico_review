@@ -348,3 +348,34 @@ body.intro-active .site{opacity:0}
 @media (prefers-reduced-motion:reduce) {
   .intro-play{display:none!important}
 }
+
+
+/* iOS Safari v1.5: limit compositor layers while retaining the glowing Orb. */
+@supports (-webkit-touch-callout: none) {
+  .intro-grain,
+  .intro-gridlines,
+  .intro-orb-ring,
+  .intro-orb-sweep { display: none !important; }
+  .intro-cosmos:before {
+    filter: none !important;
+    opacity: .18 !important;
+    animation: none !important;
+  }
+  .intro-orb:after { animation: none !important; }
+  .intro-orb-glow { box-shadow: 0 0 56px 20px #ad132c35; }
+  .intro.has-film .intro-cosmos { visibility: hidden; }
+  .intro-film video {
+    filter: none !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translate3d(0, -1.5svh, 0);
+    will-change: auto;
+  }
+  .intro.has-film .intro-center {
+    visibility: hidden;
+  }
+  .intro.awaiting-tap .intro-center,
+  .intro.fallback .intro-center {
+    visibility: visible;
+  }
+}
