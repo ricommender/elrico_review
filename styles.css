@@ -207,3 +207,89 @@ body.intro-active .site{opacity:0}
   .intro-status:before,.intro .intro-progress-line span{animation:none!important}
   .btn-replay{display:none!important}
 }
+
+
+/* ELRICO cinematic intro v1.3.1 — contain the entire square Magnific movie.
+   Background orb can stay immersive, but the film/logo ALWAYS fit inside a safe frame. */
+.intro {
+  --intro-media-size: min(55vw, 58svh, 550px);
+}
+.intro-film {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 var(--page);
+}
+.intro-film video {
+  display: block;
+  flex: none;
+  aspect-ratio: 1 / 1;
+  width: var(--intro-media-size);
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100svh - 230px);
+  object-fit: contain;
+  object-position: center;
+  transform: translateY(-1.5svh);
+}
+.intro-center {
+  width: 100%;
+  max-width: 100%;
+  padding: 88px 20px 115px;
+  box-sizing: border-box;
+}
+.intro-logo-frame {
+  width: var(--intro-media-size) !important;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100svh - 260px);
+  min-width: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+.intro-logo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.intro-cosmos .intro-orb {
+  width: min(72vmin, 720px);
+}
+@media (max-width: 760px) {
+  .intro {
+    --intro-media-size: min(77vw, 49svh, 440px);
+  }
+  .intro-film video {
+    max-height: calc(100svh - 235px);
+  }
+  .intro-center {
+    padding: 75px 16px 130px;
+  }
+  .intro-logo-frame {
+    width: var(--intro-media-size) !important;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100svh - 270px);
+  }
+  .intro-cosmos .intro-orb {
+    width: min(88vw, 520px);
+  }
+}
+@media (max-height: 650px) {
+  .intro {
+    --intro-media-size: min(58vw, 45svh, 400px);
+  }
+  .intro-center {
+    padding-top: 55px;
+    padding-bottom: 100px;
+  }
+  .intro-film video {
+    max-height: calc(100svh - 160px);
+  }
+  .intro-logo-frame {
+    width: var(--intro-media-size) !important;
+    max-height: calc(100svh - 180px);
+  }
+}
