@@ -4,10 +4,10 @@
 
 ## GitHub Pages aktivieren
 
-1. Öffne [Settings → Pages](https://github.com/ricommender/elrico_rewiew/settings/pages).
+1. Öffne [Settings → Pages](https://github.com/ricommender/elrico_review/settings/pages).
 2. Wähle unter **Build and deployment → Source** die Option **GitHub Actions**.
-3. Starte auf [Actions → Publish elrico preview](https://github.com/ricommender/elrico_rewiew/actions/workflows/deploy-pages.yml) den Workflow über **Run workflow**.
-4. Prüfe anschließend die Vorschau unter https://ricommender.github.io/elrico_rewiew/ .
+3. Starte auf [Actions → Publish elrico preview](https://github.com/ricommender/elrico_review/actions/workflows/deploy-pages.yml) den Workflow über **Run workflow**.
+4. Prüfe anschließend die Vorschau unter https://ricommender.github.io/elrico_review/ .
 
 Die Testseite ist öffentlich und mit `noindex` gekennzeichnet. Das private Entwicklungsrepository bleibt getrennt.
 
@@ -26,7 +26,7 @@ Die Testseite ist öffentlich und mit `noindex` gekennzeichnet. Das private Entw
 - **Originalmarke:** `logo/elrico-final.svg` bleibt unverändert; das private Original-Repository `ricommender/elrico` bleibt Referenz.
 - **Performance / Bedienung:** Film stumm, auf Mobilgeräten `playsinline`; bei reduzierter Bewegung wird das Intro übersprungen.
 
-Live-Test: https://ricommender.github.io/elrico_rewiew/
+Live-Test: https://ricommender.github.io/elrico_review/
 
 ## Cinematic Intro — Preview v1.3
 
@@ -36,3 +36,13 @@ Live-Test: https://ricommender.github.io/elrico_rewiew/
 - Start des Films erst bei Ladebereitschaft; bei langsamer Verbindung oder gesperrtem Autoplay läuft eine kurze CSS-Fallback-Sequenz und die Webseite öffnet sich automatisch.
 - Intro kann jederzeit übersprungen und auf Wunsch erneut gestartet werden. Bei `prefers-reduced-motion` startet die Seite ohne Intro.
 - `logo/elrico-final.svg` bleibt der unveränderte Logo-Referenzstand v1.0.
+
+## Cinematic Intro — iPhone/Safari Stabilisierung v1.4
+
+- Fehlerursache aus dem bisherigen Code: 1,85 Sekunden Video-Ladefrist und Abbruch schon nach 1,5 Sekunden Buffering.
+- Der Film wird nun unmittelbar über `video.play()` angefordert; die Wiedergabe-Promise entscheidet, ob das Autoplay erfolgreich ist. Die harte Startfrist ist auf 3,6 Sekunden erhöht.
+- Bei blockiertem Autoplay erscheint **Film auf diesem Gerät starten**. Der Button löst `play()` direkt durch eine Nutzerinteraktion aus, was unter Safari/Low-Power-Mode zuverlässiger ist.
+- Ohne Eingabe wird die Homepage nach kurzer Schonfrist automatisch geöffnet; auch bei Abspiel- oder Bufferingfehlern bleibt die Seite erreichbar.
+- `playsinline`, `webkit-playsinline` und `muted` sind gesetzt; der Originalfilm und das FINAL-v1.0-Logo bleiben unverändert.
+- Repository nach Umbenennung: https://github.com/ricommender/elrico_review
+- GitHub-Pages-Vorschau: https://ricommender.github.io/elrico_review/
