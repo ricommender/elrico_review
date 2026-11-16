@@ -46,3 +46,12 @@ Live-Test: https://ricommender.github.io/elrico_review/
 - `playsinline`, `webkit-playsinline` und `muted` sind gesetzt; der Originalfilm und das FINAL-v1.0-Logo bleiben unverändert.
 - Repository nach Umbenennung: https://github.com/ricommender/elrico_review
 - GitHub-Pages-Vorschau: https://ricommender.github.io/elrico_review/
+
+## iPhone-Stabilisierung v1.5
+
+- iPhone-Video: `assets/elrico-orb-intro-mobile.mp4` (720×720, H.264 Baseline, ca. 0,96 MiB).
+- Kein hartes 5-/6-Sekunden-Limit mehr: Die Sequenz endet regulär mit dem tatsächlichen `ended`-Event, nicht durch einen Timer oder `visibilitychange`.
+- Kein Abbruch nach kurzem Puffern; bei sehr langer Unterbrechung erscheint eine manuelle Fortsetzen-Funktion.
+- Wenn Autoplay blockiert wird, kann das Video direkt per Button gestartet werden. Intro überspringen bleibt möglich.
+- Visuelle Safari-GPU-Effekte sind reduziert. Die Original-Magnific-Sequenz und das finale v1.0-Logo bleiben unangetastet.
+- Diagnosemodus ausschließlich lokal im Browser: `https://ricommender.github.io/elrico_review/?debug=1` zeigt Videoereignisse und MediaError-Codes an; keine Übertragung an einen Server.
