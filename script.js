@@ -1,12 +1,13 @@
 (() => {
   'use strict';
 
-  // Cinematic preview v1.3: honest, non-blocking video readiness.
-  // The original final logo and the Magnific film are never regenerated.
+  // Cinematic preview 1.4: Safari-safe autoplay, manual start and graceful fallback.
+  // Original logo artwork and the Magnific movie remain unchanged.
   const intro = document.getElementById('intro');
   const site = document.getElementById('site');
   const skip = document.getElementById('skip-intro');
   const replay = document.getElementById('replay-intro');
+  const playButton = document.getElementById('intro-play');
   const video = document.getElementById('intro-video');
   const status = document.getElementById('intro-status');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -17,13 +18,13 @@
   let sequence = 0;
   let pendingPlay = false;
   let readyTimeout = 0;
-  let fallbackTimeout = 0;
+  let graceTimeout = 0;
   let filmTimeout = 0;
   let bufferingTimeout = 0;
 
   function clearIntroTimers() {
     clearTimeout(readyTimeout);
-    clearTimeout(fallbackTimeout);
+    clearTimeout(graceTimeout);
     clearTimeout(filmTimeout);
     clearTimeout(bufferingTimeout);
   }
@@ -35,11 +36,14 @@
   function finishIntro() {
     if (closed) return;
     closed = true;
-    sequence += 1;
+    sequence++;
+    phase = 'idle';
+    pendingPlay = false;
     clearIntroTimers();
     if (video) video.pause();
+    if (playButton) playButton.hidden = true;
     intro.classList.add('done');
-    intro.classList.remove('has-film', 'buffering');
+    intro.classList.remove('has-film', 'buffering', 'awaiting-tap');
     intro.setAttribute('aria-hidden', 'true');
     intro.setAttribute('inert', '');
     site.removeAttribute('inert');
@@ -48,56 +52,103 @@
     if (returningFocus) {
       replay.focus({preventScroll: true});
       returningFocus = false;
-    } else if (document.activeElement === skip) {
+    } else if (document.activeElement === skip || document.activeElement === playButton) {
       skip.blur();
     }
   }
 
-  function playFallback() {
-    if (closed || phase !== 'loading') return;
+  function fallbackIntro(message = 'ORB-ANIMATION') {
+    if (closed || phase === 'idle') return;
     phase = 'fallback';
     pendingPlay = false;
-    clearTimeout(readyTimeout);
-    intro.classList.remove('has-film', 'buffering');
+    clearIntroTimers();
+    if (video) video.pause();
+    if (playButton) playButton.hidden = true;
+    intro.classList.remove('has-film', 'buffering', 'awaiting-tap');
     intro.classList.add('fallback');
-    setIntroStatus('ORB-ANIMATION');
-    // A slow or blocked video must never block access to the actual page.
-    fallbackTimeout = setTimeout(finishIntro, 1550);
+    setIntroStatus(message);
+    graceTimeout = setTimeout(finishIntro, 1650);
   }
 
-  function tryStartFilm() {
-    if (!video || closed || phase !== 'loading' || pendingPlay || video.readyState < 3) return;
+  function offerManualPlayback() {
+    if (closed || phase !== 'loading') return;
+    phase = 'manual';
+    pendingPlay = false;
+    clearTimeout(readyTimeout);
+    if (video) video.pause();
+    intro.classList.remove('has-film', 'buffering');
+    intro.classList.add('awaiting-tap');
+    if (playButton) playButton.hidden = false;
+    setIntroStatus('VIDEO MANUELL STARTEN');
+    // The homepage remains accessible without any interaction.
+    graceTimeout = setTimeout(finishIntro, 3600);
+  }
+
+  function startFilm(manual = false) {
+    if (!video || closed || pendingPlay) return;
+    if (manual ? phase !== 'manual' : phase !== 'loading') return;
     pendingPlay = true;
+    if (manual) {
+      phase = 'starting';
+      clearTimeout(graceTimeout);
+      if (playButton) playButton.hidden = true;
+      setIntroStatus('FILM WIRD GESTARTET');
+    }
+
     const token = sequence;
+    video.muted = true;
+    video.playsInline = true;
+    // play() is called directly from the manual button's click gesture on iOS.
+    let promise;
     try {
-      const promise = video.play();
-      Promise.resolve(promise).then(() => {
-        if (closed || sequence !== token || phase !== 'loading') {
-          video.pause();
-          return;
-        }
-        pendingPlay = false;
-        phase = 'film';
-        clearTimeout(readyTimeout);
-        intro.classList.remove('fallback', 'buffering');
-        intro.classList.add('has-film');
-        setIntroStatus('FILMSEQUENZ AKTIV');
-        // Includes a little margin over the real 5.04 second movie.
-        filmTimeout = setTimeout(finishIntro, 6000);
-      }).catch(() => {
-        if (!closed && sequence === token) playFallback();
-      });
+      promise = video.play();
     } catch (_) {
-      playFallback();
+      pendingPlay = false;
+      if (manual) fallbackIntro('VIDEO NICHT VERFÜGBAR');
+      else offerManualPlayback();
+      return;
+    }
+
+    Promise.resolve(promise).then(() => {
+      if (closed || sequence !== token || (phase !== 'loading' && phase !== 'starting')) {
+        video.pause();
+        return;
+      }
+      pendingPlay = false;
+      phase = 'film';
+      clearTimeout(readyTimeout);
+      clearTimeout(graceTimeout);
+      if (playButton) playButton.hidden = true;
+      intro.classList.remove('fallback', 'buffering', 'awaiting-tap');
+      intro.classList.add('has-film');
+      setIntroStatus('FILMSEQUENZ AKTIV');
+      filmTimeout = setTimeout(finishIntro, 6500);
+    }).catch(() => {
+      if (closed || sequence !== token) return;
+      pendingPlay = false;
+      if (manual) fallbackIntro('VIDEO AUF DIESEM GERÄT NICHT VERFÜGBAR');
+      else offerManualPlayback();
+    });
+
+    if (manual) {
+      // Some iOS versions leave play() pending if the media cannot be decoded.
+      readyTimeout = setTimeout(() => {
+        if (!closed && sequence === token && phase === 'starting') {
+          fallbackIntro('VIDEO AUF DIESEM GERÄT NICHT VERFÜGBAR');
+        }
+      }, 2500);
     }
   }
 
   function startIntro(fromReplay = false) {
     if (reduced) return;
-    sequence += 1;
+    sequence++;
     clearIntroTimers();
     if (video) {
       video.pause();
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
       try { video.currentTime = 0; } catch (_) {}
     }
     closed = false;
@@ -107,8 +158,8 @@
 
     intro.removeAttribute('inert');
     intro.setAttribute('aria-hidden', 'false');
-    intro.classList.remove('done', 'run', 'fallback', 'buffering', 'has-film');
-    // Restarts the CSS orb/metal fallback without changing either image.
+    intro.classList.remove('done', 'run', 'fallback', 'buffering', 'has-film', 'awaiting-tap');
+    if (playButton) playButton.hidden = true;
     void intro.offsetWidth;
     intro.classList.add('run');
     site.classList.remove('ready');
@@ -117,32 +168,34 @@
     setIntroStatus('FILM WIRD GELADEN');
     if (fromReplay) skip.focus({preventScroll: true});
 
-    // Never force the visitor to wait for a large media download.
-    readyTimeout = setTimeout(playFallback, 1850);
+    // Safari may defer preload, so a strict 1.85 s readyState deadline is too short.
+    // Attempt playback immediately and let the play() promise tell us if it succeeded.
+    readyTimeout = setTimeout(offerManualPlayback, 3600);
     if (video) {
-      if (video.readyState >= 3) tryStartFilm();
-      else video.load();
+      if (video.readyState === 0) video.load();
+      startFilm(false);
     } else {
-      playFallback();
+      fallbackIntro();
     }
   }
 
   if (video) {
-    video.addEventListener('canplay', tryStartFilm);
-    video.addEventListener('loadeddata', tryStartFilm);
     video.addEventListener('ended', () => {
       if (!closed && phase === 'film') finishIntro();
     });
     video.addEventListener('error', () => {
-      if (!closed && phase === 'loading') playFallback();
-      else if (!closed && phase === 'film') finishIntro();
+      if (closed) return;
+      if (phase === 'loading') offerManualPlayback();
+      else if (phase === 'film' || phase === 'starting') fallbackIntro('VIDEO NICHT VERFÜGBAR');
     });
     video.addEventListener('waiting', () => {
       if (closed || phase !== 'film') return;
       intro.classList.add('buffering');
-      setIntroStatus('ORB BLEIBT AKTIV');
+      setIntroStatus('VIDEO WIRD GEPUFFERT');
       clearTimeout(bufferingTimeout);
-      bufferingTimeout = setTimeout(finishIntro, 1500);
+      bufferingTimeout = setTimeout(() => {
+        if (!closed && phase === 'film') fallbackIntro();
+      }, 3000);
     });
     video.addEventListener('playing', () => {
       if (closed || phase !== 'film') return;
@@ -153,6 +206,7 @@
   }
 
   skip.addEventListener('click', finishIntro);
+  if (playButton) playButton.addEventListener('click', () => startFilm(true));
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !closed) finishIntro();
   });
@@ -160,11 +214,12 @@
     if (document.hidden && !closed) finishIntro();
   });
   replay.addEventListener('click', () => startIntro(true));
+
   if (reduced) {
     closed = false;
     if (video) {
       video.preload = 'none';
-      video.removeAttribute('src');
+      video.querySelectorAll('source').forEach(source => source.remove());
     }
     finishIntro();
   } else {
