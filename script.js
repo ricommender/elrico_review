@@ -13,6 +13,34 @@
   const isiOS = /iP(hone|ad|od)/i.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+  // Enable a small on-device video event inspector with ?debug=1.
+  // It is not shown to normal visitors and sends no telemetry anywhere.
+  if (/[?&]debug=1(?:&|$)/.test(window.location.search)) {
+    const panel = document.createElement('pre');
+    panel.setAttribute('aria-label', 'ELRICO Video-Diagnose');
+    panel.style.cssText = 'position:fixed;top:48px;left:8px;z-index:9999;max-width:min(94vw,410px);max-height:42vh;overflow:hidden;padding:10px;color:#fff;background:#090509e8;border:1px solid #f34;font:11px/1.45 monospace;white-space:pre-wrap;pointer-events:none;';
+    document.body.appendChild(panel);
+    const lines = ['ELRICO iPhone-Diagnose v1.5', 'iOS: ' + String(isiOS)];
+    function report(eventName, detail) {
+      const data = video ? 'time=' + video.currentTime.toFixed(1) + ' ready=' + video.readyState +
+        ' network=' + video.networkState + ' paused=' + video.paused +
+        ' error=' + (video.error ? video.error.code : '-') : 'no video';
+      lines.push(eventName + ' ' + (detail || '') + ' ' + data);
+      if (lines.length > 9) lines.splice(2, lines.length - 9);
+      panel.textContent = lines.join('\n');
+    }
+    if (video) {
+      ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'play', 'playing',
+       'waiting', 'stalled', 'pause', 'ended', 'error'].forEach(type => {
+        video.addEventListener(type, () => report(type));
+      });
+    }
+    window.addEventListener('error', ev => report('JS-ERROR', String(ev.message).slice(0,100)));
+    window.addEventListener('unhandledrejection', ev => report('PROMISE-ERROR',
+      String(ev.reason && ev.reason.name || ev.reason).slice(0,100)));
+    report('initialisiert');
+  }
+
   let closed = true;
   let phase = 'idle';
   let sequence = 0;
