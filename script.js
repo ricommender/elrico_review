@@ -71,7 +71,8 @@
   }
 
   function requestManualStart(message = 'ZUM STARTEN TIPPEN') {
-    if (closed || phase === 'film') return;
+    if (closed || phase === 'idle' || phase === 'fallback') return;
+    const wasPlaying = phase === 'film';
     phase = 'manual';
     pendingPlay = false;
     clearTimeout(preloadTimer);
@@ -81,7 +82,7 @@
     intro.classList.add('awaiting-tap');
     if (playButton) {
       playButton.hidden = false;
-      playButton.firstChild.textContent = 'Film starten ';
+      playButton.firstChild.textContent = wasPlaying ? 'Film fortsetzen ' : 'Film starten ';
     }
     showStatus(message);
     // No auto-dismiss here: the visitor decides to play or use the always visible skip.
