@@ -205,7 +205,6 @@
     // An iPhone receives the smaller H.264 Baseline variant with faststart.
     if (isiOS && video.getAttribute('src') !== './assets/elrico-orb-intro-mobile.mp4') {
       video.setAttribute('src', './assets/elrico-orb-intro-mobile.mp4');
-      video.load();
     }
 
     // Wait for real media readiness rather than guessing from time alone.
