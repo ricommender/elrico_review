@@ -293,3 +293,58 @@ body.intro-active .site{opacity:0}
     max-height: calc(100svh - 180px);
   }
 }
+
+
+/* Preview 1.4 — Safari/iPhone media resilience. */
+.intro-play {
+  position:absolute;
+  left:50%;
+  bottom:clamp(90px,13svh,150px);
+  transform:translateX(-50%);
+  z-index:8;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  min-height:48px;
+  max-width:calc(100vw - 32px);
+  padding:13px 20px;
+  border:1px solid #ff5478a6;
+  border-radius:3px;
+  background:rgba(30,4,13,.92);
+  box-shadow:0 0 35px #ff1c4550,inset 0 0 14px #ff33551c;
+  color:#fff;
+  text-transform:uppercase;
+  white-space:nowrap;
+  font:700 clamp(10px,1.05vw,13px)/1.4 "Courier New",monospace;
+  letter-spacing:.055em;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.intro-play span{color:#ff355b;font-size:16px}
+.intro-play:hover,.intro-play:focus-visible{
+  background:#571021;
+  outline:2px solid #ff355b;
+  outline-offset:3px;
+}
+.intro-play[hidden]{display:none!important}
+.intro.awaiting-tap .intro-cosmos{opacity:1!important}
+.intro.awaiting-tap .intro-logo-frame{visibility:visible!important}
+.intro.awaiting-tap .intro-film{opacity:0!important}
+.intro.awaiting-tap .intro-progress-line{opacity:0}
+.intro.awaiting-tap .intro-status:before{animation:preloaderLive 1.6s ease-in-out infinite}
+.intro.has-film .intro-play{display:none!important}
+@media (max-width:760px) {
+  .intro-play {
+    bottom:clamp(95px,15svh,135px);
+    width:min(92vw,350px);
+    padding:14px 12px;
+    font-size:11px;
+  }
+}
+@media (max-height:560px) {
+  .intro-play{bottom:54px}
+}
+@media (prefers-reduced-motion:reduce) {
+  .intro-play{display:none!important}
+}
