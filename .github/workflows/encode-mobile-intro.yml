@@ -1,0 +1,36 @@
+name: Encode iPhone-compatible cinematic intro
+on:
+  push:
+    paths:
+      - '.github/workflows/encode-mobile-intro.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  encode-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      - name: Encode lightweight iPhone-compatible MP4
+        run: |
+          set -euo pipefail
+          ffmpeg -hide_banner -loglevel error -nostdin -y \
+            -i assets/elrico-orb-intro-web.mp4 \
+            -vf "scale=720:720:flags=lanczos,format=yuv420p" \
+            -an -r 24 -c:v libx264 -preset medium -crf 25 \
+            -profile:v baseline -level:v 3.1 -maxrate 1400k -bufsize 2800k \
+            -movflags +faststart \
+            assets/elrico-orb-intro-mobile.mp4
+          ffprobe -v error -show_entries stream=codec_name,profile,width,height,pix_fmt,level -show_entries format=size,duration -of default=noprint_wrappers=1 assets/elrico-orb-intro-mobile.mp4
+          test "$(stat -c%s assets/elrico-orb-intro-mobile.mp4)" -gt 100000
+      - name: Commit mobile asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/elrico-orb-intro-mobile.mp4
+          git diff --cached --quiet || git commit -m "Add low-memory iPhone-compatible metallic intro"
+          git push
